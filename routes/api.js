@@ -7,7 +7,7 @@
 */
 
 'use strict';
-const Book = require('./models/book');
+const Book = require('../models/Book');
 
 module.exports = function (app) {
 
@@ -29,12 +29,12 @@ module.exports = function (app) {
     .post(async function (req, res) {
       const title = req.body.title;
       if (!title) {
-        return res.status(400).send('title is required');
+        return res.send('missing required field title');
       }
       try {
         const newBook = new Book({ title });
         await newBook.save();
-        res.json(newBook);
+        res.json({_id: newBook._id, title: newBook.title});
       } catch (err) {
         res.status(500).send('Database error');
       }
@@ -55,9 +55,13 @@ module.exports = function (app) {
       try {
         const book = await Book.findById(bookid);
         if (!book) {
-          return res.status(404).send('book not found');
+          return res.send('no book exists');
         }
-        res.json(book);
+        res.json({
+          _id: book._id,
+          title: book.title,
+          comments: book.comments
+        });
       } catch (err) {
         res.status(500).send('Database error');
       }
@@ -67,16 +71,20 @@ module.exports = function (app) {
       const bookid = req.params.id;
       const comment = req.body.comment;
       if (!comment) {
-        return res.status(400).send('comment is required');
+        return res.send('missing required field comment');
       }
       try {
         const book = await Book.findById(bookid);
         if (!book) {
-          return res.status(404).send('book not found');
+          return res.send('no book exists');
         }
         book.comments.push(comment);
         await book.save();
-        res.json(book);
+        res.json({
+          _id: book._id,
+          title: book.title,
+          comments: book.comments
+        });
       } catch (err) {
         res.status(500).send('Database error');
       }
@@ -87,7 +95,7 @@ module.exports = function (app) {
       try {
         const book = await Book.findByIdAndDelete(bookid);
         if (!book) {
-          return res.status(404).send('book not found');
+          return res.send('no book exists');
         }
         res.send('delete successful');
       } catch (err) {
